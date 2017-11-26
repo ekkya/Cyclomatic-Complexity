@@ -1,6 +1,7 @@
 
 {-# LANGUAGE BangPatterns    #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# Language OverloadedStrings #-}
 --{-# CPP #-}
 
 -- | use-haskell
@@ -29,6 +30,21 @@ import           PrimeFactors
 import           System.Environment                                 (getArgs)
 import           System.Exit
 
+import Git
+import Data.ByteString (ByteString)
+import Data.Maybe
+import Data.Text.Encoding (encodeUtf8)
+import qualified Data.Text as T
+
+let repoOpts = RepositoryOptions { repoPath = "."
+                                     , repoWorkingDir = Nothing
+                                     , repoIsBare = False
+                                     , repoAutoCreate = False
+                                     }
+    repo <- openRepository repoOpts False
+    ref    <- resolveRef repo "HEAD"
+    commit <- maybe (return Nothing) (lookupCommit repo) ref
+
 -- this is the work we get workers to do. It could be anything we want. To keep things simple, we'll calculate the
 -- number of prime factors for the integer passed.
 doWork :: Integer -> Integer
@@ -53,9 +69,9 @@ worker (manager, workQueue) = do
       -- Wait for work to arrive. We will either be sent a message with an integer value to use as input for processing,
       -- or else we will be sent (). If there is work, do it, otherwise terminate
       receiveWait
-        [ match $ \n  -> do
-            liftIO $ putStrLn $ "[Node " ++ (show us) ++ "] given work: " ++ show n
-            send manager (doWork n)
+        [ match $ \commit  -> do
+            liftIO $ putStrLn $ "[Node " ++ (show us) ++ "] given work: " ++ show commit
+            send manager (doWork commit)
             liftIO $ putStrLn $ "[Node " ++ (show us) ++ "] finished work."
             go us -- note the recursion this function is called again!
         , match $ \ () -> do
@@ -68,14 +84,14 @@ remotable ['worker] -- this makes the worker function executable on a remote nod
 manager :: Integer    -- The number range we wish to generate work for (there will be n work packages)
         -> [NodeId]   -- The set of cloud haskell nodes we will initalise as workers
         -> Process Integer
-manager n workers = do
+manager repo workers = do
   us <- getSelfPid
 
   -- first, we create a thread that generates the work tasks in response to workers
   -- requesting work.
   workQueue <- spawnLocal $ do
     -- Return the next bit of work to be done
-    forM_ [1 .. n] $ \m -> do
+    forM_ commit $ \m -> do
       pid <- expect   -- await a message from a free worker asking for work
       send pid m     -- send them work
 

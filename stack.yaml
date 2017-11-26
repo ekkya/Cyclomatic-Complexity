@@ -23,7 +23,7 @@ docker:
 # stack image container 
 image:
   container:
-    name: use-cloudhaskell
+    name: Cyclomatic-Complexity
     base: fpco/stack-run
 
 # User packages to be built.
