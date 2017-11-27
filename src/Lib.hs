@@ -36,19 +36,25 @@ import Data.Maybe
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Text as T
 
-let repoOpts = RepositoryOptions { repoPath = "."
-                                     , repoWorkingDir = Nothing
-                                     , repoIsBare = False
-                                     , repoAutoCreate = False
-                                     }
-    repo <- openRepository repoOpts False
-    ref    <- resolveRef repo "HEAD"
-    commit <- maybe (return Nothing) (lookupCommit repo) ref
+import Argon
+
+do 
+	let repoOpts = RepositoryOptions { repoPath = "."
+		                             , repoWorkingDir = Nothing
+		                             , repoIsBare = False
+		                             , repoAutoCreate = False
+		                             }
+	repo <- openRepository repoOpts False
+	ref    <- resolveRef repo "HEAD"
+	commit <- maybe (return Nothing) (lookupCommit repo) ref
 
 -- this is the work we get workers to do. It could be anything we want. To keep things simple, we'll calculate the
 -- number of prime factors for the integer passed.
-doWork :: Integer -> Integer
-doWork = numPrimeFactors
+--doWork :: Integer -> Integer
+--doWork = numPrimeFactors
+
+doWork :: FilePath -> FilePath
+doWork = argon repo
 
 -- | worker function.
 -- This is the function that is called to launch a worker. It loops forever, asking for work, reading its message queue
@@ -81,10 +87,10 @@ worker (manager, workQueue) = do
 
 remotable ['worker] -- this makes the worker function executable on a remote node
 
-manager :: Integer    -- The number range we wish to generate work for (there will be n work packages)
+manager :: FilePath    -- The number range we wish to generate work for (there will be n work packages)
         -> [NodeId]   -- The set of cloud haskell nodes we will initalise as workers
         -> Process Integer
-manager repo workers = do
+manager commit workers = do
   us <- getSelfPid
 
   -- first, we create a thread that generates the work tasks in response to workers
@@ -108,20 +114,20 @@ manager repo workers = do
   liftIO $ putStrLn $ "[Manager] Workers spawned"
   -- wait for all the results from the workers and return the sum total. Look at the implementation, whcih is not simply
   -- summing integer values, but instead is expecting results from workers.
-  sumIntegers (fromIntegral n)
+  --sumIntegers (fromIntegral n)
 
 -- note how this function works: initialised with n, the number range we started the program with, it calls itself
 -- recursively, decrementing the integer passed until it finally returns the accumulated value in go:acc. Thus, it will
 -- be called n times, consuming n messages from the message queue, corresponding to the n messages sent by workers to
 -- the manager message queue.
-sumIntegers :: Int -> Process Integer
-sumIntegers = go 0
-  where
-    go :: Integer -> Int -> Process Integer
-    go !acc 0 = return acc
-    go !acc n = do
-      m <- expect
-      go (acc + m) (n - 1)
+--sumIntegers :: Int -> Process Integer
+--sumIntegers = go 0
+  --where
+    --go :: Integer -> Int -> Process Integer
+    --go !acc 0 = return acc
+    --go !acc n = do
+      --m <- expect
+      --go (acc + m) (n - 1)
 
 rtable :: RemoteTable
 rtable = Lib.__remoteTable initRemoteTable

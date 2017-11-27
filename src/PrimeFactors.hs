@@ -23,3 +23,4 @@ primeFactors = factors primes
 
 numPrimeFactors :: Integer -> Integer
 numPrimeFactors = fromIntegral . length . primeFactors
+
