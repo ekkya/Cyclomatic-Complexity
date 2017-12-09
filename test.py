@@ -10,6 +10,7 @@ git_url = "https://github.com/geekcomputers/Python.git"
 repo_dir = "/home/ekkya/Cyclomatic-Complexity/test"
 repo.clone_from(git_url, repo_dir)
 print "1"
+repo = git.Repo(repo_dir)
 commits_touching_path = list(repo.iter_commits('master'))
 print commits_touching_path
 print len(commits_touching_path)
@@ -22,7 +23,7 @@ for root, dirs, files in os.walk(repo_dir):
                 try:
                     file_contents = repo.git.show('{}:{}'.format(commits.hexsha, file))
                     #print file_contents
-                    f1 = open('test_' + str(i) + '.txt', 'a')
+                    f1 = open('test_' + str(i) + '.py', 'a')
                     f1.write(file_contents)
                 except git.exc.GitCommandError:
                     continue
