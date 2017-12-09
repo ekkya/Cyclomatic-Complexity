@@ -8,9 +8,10 @@ from rq import Connection, Queue
 from CC import get_complexity
 
 def main():
-    #Get a directory present in a git repo (cloned into local machine)
-    directory = "/home/ekkya/Cyclomatic-Complexity/cpython/"
-
+    repo = git.Repo()
+    git_url = "https://github.com/ekkya/CS7NS1-Individual-task.git"
+    repo_dir = "/home/ekkya/Cyclomatic-Complexity/"
+    repo.clone_from(git_url, repo_dir)
     # Kick off the tasks asynchronously
     async_results = {}
     connection = sqlite3.connect('results.db')
