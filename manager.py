@@ -22,12 +22,15 @@ def main():
     # Kick off the tasks asynchronously
     async_results = {}
     connection = sqlite3.connect('results_4w.db')
-    print "Database Opened"
-    connection.execute('''CREATE TABLE RESULTS
-                                             (FileName TEXT PRIMARY KEY     NOT NULL,
-                                              CC            REAL,
-                                             TimeTaken      REAL    NOT NULL);''')
-    print "Table created successfully"
+    #print "Database Opened"
+    #connection.execute('''CREATE TABLE RESULTS
+     #                                        (FileName TEXT PRIMARY KEY     NOT NULL,
+      #                                        CC            REAL,
+       #                                      TimeTaken      REAL    NOT NULL);''')
+    #connection.execute('''CREATE TABLE WORKERS
+     #                                            (WORKER INT PRIMARY KEY     NOT NULL,
+      #                                           TimeTaken      REAL    NOT NULL);''')
+    #print "Table created successfully"
     q = Queue()
     #commits_touching_path = list(repo.iter_commits('master'))
     #for root, dirs, files in os.walk(repo_dir):
@@ -47,9 +50,10 @@ def main():
         for file in files:
             q1 = str(os.path.join(directory, file))
             async_results[file] = q.enqueue(get_complexity, q1)  ##CHANGE TO PATH OF F1
-            start_time = time.time()
+            #start_time = time.time()
 
-    #start_time = time.time()
+    worker = 30
+    start_time = time.time()
     done = False
     while not done:
         os.system('clear')
@@ -66,14 +70,20 @@ def main():
                         #print('CC(%s) = %s' % (filename, result))
                     #total_time = time.time() - start_time
                     if result != '(calculating)':
-                        total_time = time.time() - start_time
+                        end_time = time.time()
+                        total_time = end_time - start_time
                         cursor = connection.execute("INSERT OR REPLACE INTO RESULTS VALUES (?, ?, ?)",
                                                     (file, result, total_time))
                         connection.commit()
                     else:
                         print "Continue"
-    print('Done')
+    #total_time = end_time - start_time
+    print total_time
+    cursor = connection.execute("INSERT OR REPLACE INTO WORKERS VALUES (?, ?)",
+                                (worker, total_time))
+    connection.commit()
 
+    print('Done')
 
 if __name__ == '__main__':
     # Tell RQ what Redis connection to use
