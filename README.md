@@ -1,5 +1,7 @@
 # Cyclomatic-Complexity
 
+Alaa Ekky     MAI Computer and Electronic Engineering       13317728
+
 To construct a REST service system, focussed on the efficient computation of code complexity for a given repository, 
 utilising a set of nodes as appropriate to minimise execution time from submission to result return.
 
